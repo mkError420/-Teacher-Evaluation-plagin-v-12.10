@@ -63,10 +63,10 @@ function tes_questions_page() {
 
     if (!empty($search_term)) {
         $like = '%' . $wpdb->esc_like($search_term) . '%';
-        $questions_query .= $wpdb->prepare(" WHERE q.question_text LIKE %s OR q.sub_question_title LIKE %s OR s.title LIKE %s", $like, $like, $like);
+        $questions_query .= $wpdb->prepare(" WHERE s.title LIKE %s", $like);
     }
 
-    $questions_query .= " ORDER BY q.id DESC";
+    $questions_query .= " ORDER BY s.title ASC, q.id DESC";
     $questions = $wpdb->get_results($questions_query);
     ?>
 
@@ -116,7 +116,7 @@ function tes_questions_page() {
         <form method="get" style="margin-bottom: 15px;">
             <input type="hidden" name="page" value="tes-questions">
             <div style="position: relative; display: inline-block; width: 300px;">
-                <input type="text" name="s" id="tes_question_search_input" value="<?php echo esc_attr($search_term); ?>" placeholder="Search by Question or Survey" style="width: 100%;" autocomplete="off">
+                <input type="text" name="s" id="tes_question_search_input" value="<?php echo esc_attr($search_term); ?>" placeholder="Search by Survey Name" style="width: 100%;" autocomplete="off">
                 <div id="tes_question_search_suggestions" style="display:none; position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #ccd0d4; z-index: 1000; max-height: 300px; overflow-y: auto; box-shadow: 0 4px 5px rgba(0,0,0,0.1);"></div>
             </div>
             <button type="submit" class="button button-secondary">Search</button>
@@ -125,6 +125,19 @@ function tes_questions_page() {
             <?php endif; ?>
         </form>
 
+        <?php
+        // Group questions by survey title
+        $grouped_questions = [];
+        if ($questions) {
+            foreach ($questions as $q) {
+                if (empty($q->survey_title)) {
+                    $q->survey_title = 'Unassigned Questions';
+                }
+                $grouped_questions[$q->survey_title][] = $q;
+            }
+        }
+        ?>
+
         <form method="post">
         <?php wp_nonce_field('tes_bulk_delete_questions_nonce', '_wpnonce'); ?>
         <div class="tablenav top" style="padding: 10px 0;">
@@ -132,39 +145,56 @@ function tes_questions_page() {
                 <button type="submit" name="tes_bulk_delete_questions" class="button button-secondary" onclick="return confirm('Are you sure you want to delete selected questions?');">Delete Selected</button>
             </div>
         </div>
-        <table class="widefat striped">
-            <thead>
-                <tr>
-                    <td id="cb" class="manage-column column-cb check-column"><input type="checkbox" id="cb-select-all-1"></td>
-                    <th>Survey</th>
-                    <th>Type</th>
-                    <th>Question</th>
-                    <th>Sub Question</th>
-                    <th>Options</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if ($questions): foreach ($questions as $q): ?>
-                    <tr>
-                        <th scope="row" class="check-column"><input type="checkbox" name="question_ids[]" value="<?php echo esc_attr($q->id); ?>"></th>
-                        <td><?php echo esc_html($q->survey_title); ?></td>
-                        <td><?php echo esc_html($q->question_type); ?></td>
-                        <td><?php echo esc_html($q->question_text); ?></td>
-                        <td><?php echo esc_html($q->sub_question_title); ?></td>
-                        <td><?php echo esc_html($q->options); ?></td>
-                        <td>
-                            <a class="button button-secondary"
-                               href="?page=tes-questions&delete=<?php echo $q->id; ?>">
-                               Delete
-                            </a>
-                        </td>
-                    </tr>
-                <?php endforeach; else: ?>
-                    <tr><td colspan="7">No questions found.</td></tr>
-                <?php endif; ?>
-            </tbody>
-        </table>
+
+        <div id="tes-questions-accordion">
+            <?php if (!empty($grouped_questions)): foreach ($grouped_questions as $survey_title => $questions_in_survey): 
+                // Auto-expand if searching
+                $is_expanded = !empty($search_term);
+                $container_style = $is_expanded ? 'display: block;' : 'display: none;';
+                $title_class = $is_expanded ? 'tes-survey-title active' : 'tes-survey-title';
+            ?>
+                <div class="tes-survey-section">
+                    <h3 class="<?php echo $title_class; ?>">
+                        <span><?php echo esc_html($survey_title); ?> (<?php echo count($questions_in_survey); ?> questions)</span>
+                        <span class="dashicons dashicons-arrow-down-alt2 toggle-icon"></span>
+                    </h3>
+                    <div class="tes-questions-table-container" style="<?php echo $container_style; ?>">
+                        <table class="widefat striped">
+                            <thead>
+                                <tr>
+                                    <td class="manage-column column-cb check-column"><input type="checkbox" class="select-all-survey-questions"></td>
+                                    <th>Type</th>
+                                    <th>Question</th>
+                                    <th>Sub Question</th>
+                                    <th>Options</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($questions_in_survey as $q): ?>
+                                    <tr>
+                                        <th scope="row" class="check-column"><input type="checkbox" name="question_ids[]" value="<?php echo esc_attr($q->id); ?>"></th>
+                                        <td><?php echo esc_html($q->question_type); ?></td>
+                                        <td><?php echo esc_html($q->question_text); ?></td>
+                                        <td><?php echo esc_html($q->sub_question_title); ?></td>
+                                        <td><?php echo esc_html($q->options); ?></td>
+                                        <td>
+                                            <a class="button button-secondary"
+                                               href="?page=tes-questions&delete=<?php echo $q->id; ?>"
+                                               onclick="return confirm('Are you sure you want to delete this question?');">
+                                               Delete
+                                            </a>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            <?php endforeach; else: ?>
+                <div class="card" style="padding: 15px;"><p>No questions found.</p></div>
+            <?php endif; ?>
+        </div>
         </form>
 
         <style>
@@ -180,6 +210,36 @@ function tes_questions_page() {
             }
             .tes-suggestion-item:last-child {
                 border-bottom: none;
+            }
+            .tes-survey-section {
+                border: 1px solid #ccd0d4;
+                margin-bottom: 10px;
+                background: #fff;
+                border-radius: 4px;
+                overflow: hidden;
+            }
+            .tes-survey-title {
+                margin: 0;
+                padding: 12px 15px;
+                cursor: pointer;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                font-size: 1.1em;
+                font-weight: 600;
+            }
+            .tes-survey-title:hover {
+                background: #f0f0f1;
+            }
+            .tes-survey-title .toggle-icon {
+                transition: transform 0.2s ease-in-out;
+            }
+            .tes-survey-title.active .toggle-icon {
+                transform: rotate(-180deg);
+            }
+            .tes-questions-table-container {
+                padding: 0 15px 15px;
+                border-top: 1px solid #e0e0e0;
             }
         </style>
         <script>
@@ -246,12 +306,11 @@ function tes_questions_page() {
                             suggestionsBox.empty();
                             if (response.success && response.data.length > 0) {
                                 $.each(response.data, function(i, item) {
-                                    var escapedQuestion = $('<div>').text(item.question_text).html();
-                                    var escapedSurvey = $('<div>').text(item.survey_title || 'N/A').html();
+                                    var escapedSurvey = $('<div>').text(item.survey_title).html();
 
                                     var $itemDiv = $('<div class="tes-suggestion-item"></div>');
-                                    $itemDiv.attr('data-value', item.question_text);
-                                    $itemDiv.html('<strong>' + escapedQuestion + '</strong><br><span style="color:#666; font-size:12px;">Survey: ' + escapedSurvey + '</span>');
+                                    $itemDiv.attr('data-value', item.survey_title);
+                                    $itemDiv.html('<strong>' + escapedSurvey + '</strong>');
                                     
                                     suggestionsBox.append($itemDiv);
                                 });
@@ -277,12 +336,18 @@ function tes_questions_page() {
                 }
             });
 
-            // Select All Checkbox
-            $('#cb-select-all-1').on('click', function() {
-                var checked = this.checked;
-                $('input[name="question_ids[]"]').prop('checked', checked);
+            // Accordion for survey questions
+            $('.tes-survey-title').on('click', function() {
+                $(this).toggleClass('active');
+                $(this).next('.tes-questions-table-container').slideToggle('fast');
             });
 
+            // Select all checkbox for a survey section
+            $('.select-all-survey-questions').on('click', function() {
+                var checked = this.checked;
+                $(this).closest('.tes-questions-table-container').find('tbody input[type="checkbox"][name="question_ids[]"]').prop('checked', checked);
+            });
+            
             // Handle Question Type Change
             $('#question_type').on('change', function() {
                 var type = $(this).val();

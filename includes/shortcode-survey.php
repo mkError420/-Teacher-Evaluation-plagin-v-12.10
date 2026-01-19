@@ -101,8 +101,58 @@ function tes_student_survey_shortcode() {
 
     ?>
 
+    <style>
+        /* Responsive Styles for 320px, 375px, 425px, 768px, 1024px, 1440px */
+        .tes-survey-select {
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+        }
+
+        @media only screen and (max-width: 768px) {
+            .tes-survey-form {
+                padding: 20px !important;
+                width: 92% !important;
+                margin: 15px auto !important;
+            }
+            .tes-header-info {
+                width: 92% !important;
+                max-width: 92% !important;
+            }
+        }
+        @media only screen and (max-width: 425px) {
+            .tes-survey-form {
+                padding: 15px !important;
+                width: 96% !important;
+            }
+            .tes-header-info {
+                width: 96% !important;
+                max-width: 96% !important;
+                flex-direction: column;
+                align-items: flex-start !important;
+                gap: 10px;
+            }
+            .tes-header-info a {
+                align-self: flex-end;
+            }
+        }
+        @media only screen and (max-width: 375px) {
+            .tes-survey-form {
+                padding: 10px !important;
+                width: 98% !important;
+            }
+            .tes-survey-select {
+                font-size: 14px !important;
+                padding: 8px !important;
+            }
+            .tes-header-info {
+                width: 98% !important;
+                max-width: 98% !important;
+            }
+        }
+    </style>
     <div class="tes-survey-container">
-        <div style="max-width: 600px; margin: 0 auto 10px; display: flex; justify-content: space-between; align-items: center; background: #f8f9fa; padding: 10px 15px; border-radius: 8px;">
+        <div class="tes-header-info" style="max-width: 800px; margin: 0 auto 10px; display: flex; justify-content: space-between; align-items: center; background: #f8f9fa; padding: 10px 15px; border-radius: 8px;">
             <div>
                 <div>Logged in as: <strong><?php echo esc_html($current_student->student_name); ?></strong></div>
                 <div style="font-size: 0.9em; color: #555; margin-top: 2px;"><?php echo esc_html($current_student->class_name); ?><?php if (!empty($current_student->phase)) echo ' - ' . esc_html($current_student->phase); ?></div>
@@ -134,7 +184,7 @@ function tes_student_survey_shortcode() {
             <select name="survey_id"
                     class="tes-survey-select"
                     required
-                    style="width:100%; margin-bottom:15px; padding: 10px; border: 2px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); font-size: 16px; transition: all 0.3s ease; background: linear-gradient(145deg, #ffffff, #e6e6e6); display: none;">
+                    style="width:100%; max-width: 100%; box-sizing: border-box; margin-bottom:15px; padding: 10px; border: 2px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); font-size: 16px; transition: all 0.3s ease; background: linear-gradient(145deg, #ffffff, #e6e6e6); display: none;">
                 <option value="">Select Teacher Survey</option>
             </select>
 

@@ -550,14 +550,14 @@ function tes_question_search_autocomplete() {
     $questions_table = $wpdb->prefix . 'tes_questions';
     $surveys_table = $wpdb->prefix . 'tes_surveys';
 
-    // Search for questions by text or survey title
+    // Search for surveys by title (distinct)
     $results = $wpdb->get_results($wpdb->prepare(
-        "SELECT q.id, q.question_text, s.title as survey_title
+        "SELECT DISTINCT s.title as survey_title
          FROM $questions_table q
          LEFT JOIN $surveys_table s ON q.survey_id = s.id
-         WHERE q.question_text LIKE %s OR q.sub_question_title LIKE %s OR s.title LIKE %s
+         WHERE s.title LIKE %s
          LIMIT 10",
-        $like, $like, $like
+        $like
     ));
     
     wp_send_json_success($results);
