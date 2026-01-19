@@ -32,6 +32,19 @@ function tes_surveys_page() {
         echo '<div class="updated notice"><p>Survey deleted successfully.</p></div>';
     }
 
+    // Bulk Delete Surveys
+    if (isset($_POST['tes_bulk_delete_surveys']) && !empty($_POST['survey_ids'])) {
+        if (!isset($_POST['_wpnonce']) || !wp_verify_nonce($_POST['_wpnonce'], 'tes_bulk_delete_surveys_nonce')) {
+            wp_die('Security check failed');
+        }
+        $ids = array_map('intval', $_POST['survey_ids']);
+        if (!empty($ids)) {
+            $ids_string = implode(',', $ids);
+            $wpdb->query("DELETE FROM $surveys_table WHERE id IN ($ids_string)");
+            echo '<div class="updated notice"><p>' . count($ids) . ' surveys deleted successfully.</p></div>';
+        }
+    }
+
     // Handle Search
     $search_term = isset($_GET['s']) ? sanitize_text_field($_GET['s']) : '';
 
@@ -122,9 +135,18 @@ function tes_surveys_page() {
             <?php endif; ?>
         </form>
 
+        <form method="post">
+        <?php wp_nonce_field('tes_bulk_delete_surveys_nonce', '_wpnonce'); ?>
+        <div class="tablenav top" style="padding: 10px 0;">
+            <div class="alignleft actions">
+                <button type="submit" name="tes_bulk_delete_surveys" class="button button-secondary" onclick="return confirm('Are you sure you want to delete selected surveys?');">Delete Selected</button>
+            </div>
+        </div>
+
         <table class="widefat striped">
             <thead>
                 <tr>
+                    <td id="cb" class="manage-column column-cb check-column"><input type="checkbox" id="cb-select-all-1"></td>
                     <th>ID</th>
                     <th>Survey Title</th>
                     <th>Teacher</th>
@@ -136,6 +158,7 @@ function tes_surveys_page() {
             <tbody>
                 <?php if ($surveys): foreach ($surveys as $s): ?>
                     <tr>
+                        <th scope="row" class="check-column"><input type="checkbox" name="survey_ids[]" value="<?php echo esc_attr($s->id); ?>"></th>
                         <td><?php echo esc_html($s->id); ?></td>
                         <td><?php echo esc_html($s->title); ?></td>
                         <td><?php echo esc_html($s->teacher_name . ' (' . $s->department . ')'); ?></td>
@@ -148,11 +171,12 @@ function tes_surveys_page() {
                     </tr>
                 <?php endforeach; else: ?>
                     <tr>
-                        <td colspan="4">No surveys created yet.</td>
+                        <td colspan="7">No surveys created yet.</td>
                     </tr>
                 <?php endif; ?>
             </tbody>
         </table>
+        </form>
     </div>
 
     <style>
@@ -253,6 +277,12 @@ function tes_surveys_page() {
             if (selectedOption.css('display') === 'none') {
                 $teacherSelect.val('');
             }
+        });
+
+        // Select All Checkbox
+        $('#cb-select-all-1').on('click', function() {
+            var checked = this.checked;
+            $('input[name="survey_ids[]"]').prop('checked', checked);
         });
     });
     </script>

@@ -363,7 +363,6 @@ function tes_teachers_page() {
             <thead>
                 <tr>
                     <td id="cb" class="manage-column column-cb check-column"><input type="checkbox" id="cb-select-all-1"></td>
-                    <th>Serial</th>
                     <th>Teacher ID</th>
                     <th>Teacher Name</th>
                     <th>Department</th>
@@ -376,7 +375,6 @@ function tes_teachers_page() {
                 <?php if ($teachers): foreach ($teachers as $t): ?>
                     <tr>
                         <th scope="row" class="check-column"><input type="checkbox" name="teacher_ids[]" value="<?php echo esc_attr($t->id); ?>"></th>
-                        <td><?php echo esc_html($t->id); ?></td>
                         <td><?php echo esc_html($t->teacher_id_number); ?></td>
                         <td><?php echo esc_html($t->name); ?></td>
                         <td><?php echo esc_html($t->department); ?></td>
