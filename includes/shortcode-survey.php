@@ -147,7 +147,7 @@ function tes_student_survey_shortcode() {
 
             <button type="submit"
                     class="button button-primary"
-                    style="margin-top:15px; padding: 12px 24px; border: none; border-radius: 8px; background: linear-gradient(135deg, #4CAF50, #45a049); color: white; font-size: 16px; font-weight: bold; box-shadow: 0 6px 12px rgba(0,0,0,0.2); cursor: pointer; transition: all 0.3s ease; transform: translateY(0);">
+                    style="margin-top:15px; padding: 12px 24px; border: none; border-radius: 6px; background: gray; color: white; font-size: 16px; font-weight: bold; box-shadow: 0 6px 12px rgba(0,0,0,0.2); cursor: pointer; transition: all 0.3s ease; transform: translateY(0);">
                 Submit Feedback
             </button>
 
